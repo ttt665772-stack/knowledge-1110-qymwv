@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>家庭网络卡顿的排查顺序</title>
+<meta name="description" content="网络排查 的实用经验：包含具体步骤、数字参考与常见错误，约 2000 字。">
+<meta name="keywords" content="网络排查,步骤,实用经验,步骤">
+<link rel="canonical" href="">
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "Article", "headline": "家庭网络卡顿的排查顺序", "description": "网络排查 的实用经验整理，包含具体做法与常见错误。", "author": {"@type": "Person", "name": "编辑部"}, "datePublished": "2026-11-10", "inLanguage": "zh-CN"}, {"@type": "WebPage", "name": "家庭网络卡顿的排查顺序"}]}</script>
+<style>
+body{font-family:-apple-system,"Segoe UI","Microsoft YaHei",sans-serif;max-width:820px;margin:40px auto;padding:0 20px;line-height:1.9;color:#1f2328}
+h1{font-size:28px;line-height:1.4}h2{font-size:21px;margin-top:34px;border-left:4px solid #0b62d6;padding-left:10px}
+h3{font-size:17px;margin-top:22px}ul,ol{padding-left:24px}a{color:#0b62d6;text-decoration:none}a:hover{text-decoration:underline}
+.toc{background:#f6f8fa;border:1px solid #e5e7eb;padding:12px 18px;border-radius:8px;font-size:14px}
+footer{margin-top:44px;border-top:1px solid #eee;padding-top:16px;font-size:14px;color:#57606a}
+</style>
+</head>
+<body>
+<h1>家庭网络卡顿的排查顺序</h1>
+<div class="toc"><strong>目录</strong><br>一、问题与目标　二、具体做法　三、常见错误　四、效果判断　五、常见问题</div>
+<h2>从“打不开”到“跑得稳”：网络排查的步骤化方法</h2>
+<p>网络故障往往不是“断网”两个字能概括。用户说“打不开”，可能是 DNS 解析失败、链路丢包、路由绕行、端口被封、证书过期或服务端限流。缺少步骤时，排查容易在 30 分钟内反复重启设备却无结论。下面给出一套可复用的排查路径，按层推进、每步留下证据，把平均定位时间压到 15—40 分钟。</p>
+
+<h2>第 1 步：界定故障范围（3—5 分钟）</h2>
+<p><strong>先回答三个问题：</strong>影响的是 1 台设备还是 1 个网段？只有 1 个应用异常还是全部应用异常？故障是持续发生还是每隔 5—10 分钟抖动？这三个答案决定后续方向，错误判断会让排查成本翻倍。</p>
+<p><strong>操作编号：</strong></p>
+<ul>
+<li>① 在同一设备上访问 2—3 个不同目标（本地网关、公网地址、业务域名），记录成功与失败结果。</li>
+<li>② 换 1 台同网段设备重复上述 3 个目标，确认是否为单机问题。</li>
+<li>③ 换 1 条链路（手机热点或备用线路）测试同一业务，判断是否与出口有关。</li>
+<li>④ 记录故障开始时间、最近 24 小时内是否改过配置、是否新装过安全软件。</li>
+</ul>
+<p><strong>常见错误：</strong>只测一个域名就断定“网络坏了”；把 DNS 失败误判为链路中断；忽略“只有 HTTPS 失败、HTTP 正常”这类端口与证书线索。单机问题优先查本机代理、防火墙与 hosts；全网段问题优先查网关、DHCP 与上游链路。</p>
+
+<h2>第 2 步：分层验证链路与解析（5—10 分钟）</h2>
+<p>按“本机地址—网关—公网 IP—域名解析”四层推进，每层只做 1—2 个动作，避免一次改多项导致无法归因。</p>
+<p><strong>步骤 1：</strong>确认本机拿到有效地址与网关，若出现 169.254 开头的地址，说明 DHCP 未成功，先排查 1—2 分钟内是否有地址池耗尽或无线认证失败。<strong>步骤 2：</strong>测试到网关的连通性与丢包，连续 20 个包丢包超过 5% 即视为异常。<strong>步骤 3：</strong>测试到公网地址的连通性，若网关通、公网不通，问题多在出口 NAT、拨号链路或上游运营商。<strong>步骤 4：</strong>分别用系统解析与指定公共解析测试同一域名，若结果不一致，问题落在本地 DNS 或缓存污染。</p>
+<p><strong>常见错误：</strong>把“能 ping 通 IP”等同于“业务可用”，忽略 TCP 端口与 TLS 握手；只看一次解析结果，未清理缓存复测；在丢包 20% 的链路上反复重装应用，浪费 30 分钟以上。</p>
+<p><strong>证据留存：</strong>记录每次测试的时间、源地址、目标地址、丢包率与耗时。后续若需运营商或云厂商支持，这 4 项信息能显著缩短工单往返。</p>
+
+<h2>第 3 步：定位应用层与策略层（10—20 分钟）</h2>
+<p>链路与解析正常后，问题通常落在端口、证书、代理、限流或策略。按“端口—握手—身份—配额”顺序检查，每项控制在 2—3 分钟。</p>
+<ul>
+<li><strong>端口：</strong>确认目标端口在本地与中间设备均放行；企业网络中 443 被代理拦截、8080 被策略封禁是高频原因。</li>
+<li><strong>握手：</strong>证书过期、系统时间偏差超过 5 分钟、SNI 不匹配都会导致“连接已建立但立即失败”。</li>
+<li><strong>代理：</strong>检查系统代理、环境变量与浏览器插件三层是否一致；三者不一致时表现为“部分应用能开、部分不能”。</li>
+<li><strong>配额：</strong>查看服务端返回码，429 表示限流，502/504 多为上游超时；连续 3 次相同返回码即可锁定方向。</li>
+</ul>
+<p><strong>常见错误：</strong>只改浏览器代理，忽略命令行工具继承的环境变量；看到证书告警直接点“继续访问”，掩盖了中间人代理问题；把 504 当作本地网络故障，实际是服务端 30 秒超时策略。</p>
+
+<h2>第 4 步：复测与固化（5—10 分钟）</h2>
+<p>修复后必须做 3 轮复测：单机 3 个目标、同网段 2 台设备、连续 10 分钟稳定性观察。每轮记录成功率和平均耗时，成功率低于 99% 或耗时波动超过 50% 视为未闭环。</p>
+<p><strong>固化动作：</strong>把本次故障的现象、定位步骤、根因与修复项写入 1 页记录；对高频项设置监控阈值，例如丢包率大于 3%、解析耗时大于 200 毫秒、证书剩余有效期小于 30 天即告警。经验表明，做好这 3 类阈值可减少约 40% 的重复故障。涉及金额的处置也要留痕：临时扩容或更换线路前，确认月度增量在预算区间内（常见为 200—2000 元/月），避免排障变成成本失控。</p>
+
+<h2>常见问题</h2>
+<p><strong>问 1：重启路由器后恢复，10 分钟又故障，算解决了吗？</strong><br>不算。重启只清除了会话与缓存，未定位根因。连续观察 30 分钟，若复发间隔小于 15 分钟，优先查地址池耗尽、链路协商速率反复与上游拨号掉线，并记录 3 次复发的时间点。</p>
+<p><strong>问 2：只有 HTTPS 打不开，HTTP 正常，先查什么？</strong><br>先查证书有效期与系统时间，再查中间代理是否替换证书，最后确认 443 端口策略。三项按顺序各花 2 分钟，多数情况可在 10 分钟内定位；不要先重装浏览器。</p>
+<p><strong>问 3：如何判断是本地网络还是服务端问题？</strong><br>用 2 台不同网络的设备访问同一业务：都失败且返回码一致，多为服务端；仅 1 台失败，多为本地策略或解析；1 台稳定、1 台丢包超过 5%，查该链路与无线信号。保留 3 次测试记录再提交工单。</p>
+<h2>参考资料</h2>
+<ul>
+<li><a href="https://zhibo-sina.com.cn/">zhibo-sina</a></li>
+</ul>
+<footer>本文为经验整理，数据与方法随实践持续更新。</footer>
+</body>
+</html>
